@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ทำใบเสนอราคา</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Sarabun:wght@400;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+<style>
+  :root { --primary: #2563eb; --primary-dark: #1d4ed8; --primary-light: #eff6ff; --border: #e2e8f0; --muted: #64748b; --bg: #f1f5f9; --green: #16a34a; }
+  * { box-sizing: border-box; }
+  body { margin: 0; font-family: 'Sarabun', sans-serif; background: var(--bg); color: #0f172a; font-size: 15px; }
+
+  header.topbar { background: #fff; border-bottom: 1px solid var(--border); padding: 10px 24px; display: flex; align-items: center; gap: 10px; position: sticky; top: 0; z-index: 10; flex-wrap: wrap; }
+  header.topbar h1 { font-size: 19px; margin: 0; flex: 1; color: var(--primary-dark); }
+  button { font-family: inherit; font-size: 15px; border-radius: 8px; border: 1px solid var(--border); background: #fff; padding: 8px 14px; cursor: pointer; }
+  button:hover { background: #f8fafc; }
+  button.primary { background: var(--primary); color: #fff; border-color: var(--primary); font-weight: 600; }
+  button.primary:hover { background: var(--primary-dark); }
+  button.green { background: var(--green); color: #fff; border-color: var(--green); font-weight: 600; }
+  button.link { border: 1px dashed #93c5fd; color: var(--primary-dark); background: var(--primary-light); width: 100%; margin-top: 6px; }
+  button.icon { border: none; background: none; color: #94a3b8; font-size: 20px; padding: 0 6px; line-height: 1; }
+  button.icon:hover { color: #dc2626; }
+
+  .layout { display: grid; grid-template-columns: minmax(420px, 520px) 1fr; gap: 24px; padding: 20px 24px; align-items: start; }
+  @media (max-width: 1150px) { .layout { grid-template-columns: 1fr; } }
+
+  .step { background: #fff; border-radius: 12px; border: 1px solid var(--border); padding: 16px 18px; margin-bottom: 14px; }
+  .step h2 { font-size: 16px; margin: 0 0 4px; display: flex; align-items: center; gap: 8px; }
+  .step h2 .num { background: var(--primary); color: #fff; width: 24px; height: 24px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center; font-size: 13px; }
+  .hint { font-size: 13px; color: var(--muted); margin: 0 0 8px; }
+  label { display: block; font-size: 13px; color: var(--muted); margin: 8px 0 3px; }
+  input, select { width: 100%; font-family: inherit; font-size: 15px; padding: 7px 10px; border: 1px solid var(--border); border-radius: 6px; background: #fff; }
+  input:focus { outline: 2px solid #bfdbfe; border-color: var(--primary); }
+  input.money { text-align: right; }
+  .row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+
+  .item { border: 1px solid #cbd5e1; border-radius: 10px; padding: 10px 12px; margin-top: 8px; background: #fcfdff; }
+  .item-top { display: flex; gap: 8px; align-items: center; }
+  .item-top .badge { background: var(--primary-light); color: var(--primary-dark); font-weight: 700; border-radius: 6px; min-width: 30px; text-align: center; padding: 4px 6px; }
+  .item-grid { display: grid; grid-template-columns: 70px 90px 1fr 1fr; gap: 6px; margin-top: 6px; }
+  .item-grid label { margin: 0 0 2px; font-size: 12px; }
+  input.calc { background: #f1f5f9; color: var(--primary-dark); font-weight: 600; }
+
+  .total-box { margin-top: 12px; background: var(--primary-light); border-radius: 10px; padding: 10px 14px; display: flex; justify-content: space-between; align-items: baseline; }
+  .total-box b { font-size: 22px; color: var(--primary-dark); }
+  .total-box small { display: block; color: var(--muted); }
+
+  .history-item { display: flex; align-items: center; gap: 8px; padding: 7px 0; border-bottom: 1px solid var(--border); }
+  .history-item div { flex: 1; min-width: 0; }
+  .history-item .t { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .history-item .s { font-size: 12px; color: var(--muted); }
+  .history-item button { padding: 4px 10px; font-size: 13px; }
+
+  .preview-wrap { position: sticky; top: 72px; overflow: auto; max-height: calc(100vh - 90px); }
+  .toast { position: fixed; bottom: 24px; left: 50%; transform: translateX(-50%); background: #0f172a; color: #fff; padding: 10px 18px; border-radius: 8px; opacity: 0; transition: opacity .2s; pointer-events: none; z-index: 99; }
+  .toast.show { opacity: 1; }
+
+  /* ===== A4 document (matches original template) ===== */
+  #doc { width: 210mm; min-height: 297mm; background: #fff; margin: 0 auto; padding: 22mm 14mm 16mm; box-shadow: 0 4px 24px rgba(0,0,0,.08); font-size: 14.5px; line-height: 1.55; color: #000; }
+  #doc .title { text-align: center; font-size: 20px; font-weight: 700; margin-bottom: 26px; }
+  #doc table { width: 100%; border-collapse: collapse; }
+  #doc td, #doc th { border: 1px solid #555; padding: 2px 7px; font-weight: 400; vertical-align: top; }
+  #doc td.head { padding: 4px 7px; font-size: 14px; }
+  #doc .items th { text-align: center; }
+  #doc .c { text-align: center; }
+  #doc .r { text-align: right; }
+  #doc tr { page-break-inside: avoid; }
+  .dots { display: inline-block; border-bottom: 1.5px dotted #000; text-align: center; line-height: 1.2; }
+  #doc .grand { margin: 34px 0 0 30px; }
+  #doc .sign { margin: 56px 30px 0 0; display: flex; flex-direction: column; align-items: flex-end; gap: 10px; page-break-inside: avoid; }
+  #doc .sign > div { width: 320px; text-align: center; }
+
+  @media print {
+    @page { size: A4; margin: 0; }
+    body { background: #fff; }
+    header.topbar, .editor, .toast { display: none !important; }
+    .layout { display: block; padding: 0; }
+    .preview-wrap { position: static; max-height: none; overflow: visible; }
+    #doc { box-shadow: none; margin: 0; }
+  }
+</style>
+</head>
+<body>
+
+<header class="topbar">
+  <h1>📄 ทำใบเสนอราคา</h1>
+  <button onclick="newQuote()">＋ ใบใหม่</button>
+  <button onclick="saveToHistory()">💾 บันทึกเก็บไว้</button>
+  <button onclick="window.print()">🖨 พิมพ์</button>
+  <button class="primary" onclick="downloadPDF()">⬇ ดาวน์โหลด PDF</button>
+</header>
+
+<datalist id="units">
+  <option>ชุด</option><option>จุด</option><option>ตัว</option><option>อัน</option><option>เส้น</option>
+  <option>เมตร</option><option>ม้วน</option><option>ลูก</option><option>ต้น</option><option>งาน</option><option>ครั้ง</option>
+</datalist>
+<datalist id="matNames"></datalist>
+<datalist id="costNames"><option>ค่าของ</option><option>ค่าแรง</option><option>ค่าเดินทาง</option><option>ค่าขนส่ง</option></datalist>
+
+<div class="layout">
+  <!-- ===== Input ===== -->
+  <div class="editor">
+    <div class="step">
+      <h2><span class="num">1</span> ลูกค้า</h2>
+      <label>บริษัท</label>
+      <input data-k="customer.company" placeholder="เช่น บริษัท ABC จำกัด (สำนักงานใหญ่)">
+      <div class="row">
+        <div><label>เรียน</label><input data-k="customer.attn" placeholder="เช่น ฝ่ายจัดซื้อ"></div>
+        <div><label>โทร</label><input data-k="customer.phone" inputmode="tel"></div>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2><span class="num">2</span> ผู้เสนอราคา & วันที่</h2>
+      <p class="hint">ข้อมูลผู้เสนอราคาจะถูกจำไว้ ไม่ต้องกรอกใหม่ทุกครั้ง</p>
+      <div class="row">
+        <div><label>ชื่อผู้เสนอราคา</label><input data-k="quoter.name"></div>
+        <div><label>โทร</label><input data-k="quoter.phone" inputmode="tel"></div>
+      </div>
+      <label>วันที่</label>
+      <input type="date" data-k="date">
+    </div>
+
+    <div class="step">
+      <h2><span class="num">3</span> รายการ</h2>
+      <p class="hint">ใส่ราคา "หน่วยละ" แล้วระบบคูณจำนวนให้อัตโนมัติ — ถ้าเป็นราคาเหมา ไม่ต้องใส่หน่วยละ ใส่ "จำนวนเงิน" ตรงๆ ได้เลย · กด Enter เพื่อเพิ่มรายการถัดไป</p>
+      <div id="itemsEditor"></div>
+      <button class="link" onclick="addItem()">＋ เพิ่มรายการ</button>
+      <div class="total-box">
+        <span>รวมทั้งสิ้น<small id="totalWords"></small></span>
+        <b id="totalNum"></b>
+      </div>
+    </div>
+
+    <div class="step">
+      <h2>📂 ใบเสนอราคาที่บันทึกไว้</h2>
+      <div id="historyList"></div>
+    </div>
+  </div>
+
+  <!-- ===== Preview ===== -->
+  <div class="preview-wrap">
+    <div id="doc"></div>
+  </div>
+</div>
+<div class="toast" id="toast"></div>
+
+<script>
+const KEY = 'quotation-app-v2';
+const HIST_KEY = 'quotation-app-v2-history';
+const todayISO = () => { const d = new Date(); return new Date(d - d.getTimezoneOffset() * 6e4).toISOString().slice(0, 10); };
+
+const newItem = () => ({ name: '', qty: '1', unit: 'ชุด', price: '', amount: '' });
+
+// แปลงข้อมูลแบบเก่า (แบ่งเป็นงาน) ให้เป็นรายการเรียงลำดับ
+function normalize(d) {
+  if (!d || d.items) return d;
+  d.items = [];
+  (d.jobs || []).forEach(j => {
+    if (j.title?.trim()) d.items.push({ ...newItem(), name: j.title, qty: '', unit: '' });
+    (j.mats || []).forEach(m => d.items.push({ name: m.name, qty: m.qty, unit: m.unit, price: '', amount: m.amount ?? '' }));
+    (j.costs || []).forEach(c => d.items.push({ name: c.name, qty: '', unit: '', price: '', amount: c.amount }));
+  });
+  if (!d.items.length) d.items.push(newItem());
+  delete d.jobs;
+  return d;
+}
+
+function blankQuote(prev) {
+  return {
+    customer: { company: '', attn: 'ฝ่ายจัดซื้อ', phone: '' },
+    quoter: prev?.quoter || { name: '', phone: '' },
+    date: todayISO(),
+    items: [newItem()],
+  };
+}
+
+let state = normalize(JSON.parse(localStorage.getItem(KEY) || 'null')) || blankQuote();
+
+const getPath = (p) => p.split('.').reduce((o, k) => o?.[k], state);
+const setPath = (p, v) => { const ks = p.split('.'); const last = ks.pop(); ks.reduce((o, k) => o[k], state)[last] = v; };
+const esc = (s) => String(s ?? '').replace(/[&<>"]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' }[c]));
+const num = (v) => parseFloat(String(v ?? '').replace(/,/g, '')) || 0;
+const fmt = (n) => n.toLocaleString('th-TH', { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+
+function toast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(() => t.classList.remove('show'), 1800);
+}
+
+// ===== Thai baht text =====
+const TH_DIGIT = ['ศูนย์', 'หนึ่ง', 'สอง', 'สาม', 'สี่', 'ห้า', 'หก', 'เจ็ด', 'แปด', 'เก้า'];
+const TH_POS = ['', 'สิบ', 'ร้อย', 'พัน', 'หมื่น', 'แสน'];
+function readInt(s, hasHigher = false) {
+  s = s.replace(/^0+/, '');
+  if (!s) return '';
+  if (s.length > 6) return readInt(s.slice(0, -6)) + 'ล้าน' + readInt(s.slice(-6), true);
+  let r = '';
+  const L = s.length;
+  for (let i = 0; i < L; i++) {
+    const d = +s[i], p = L - i - 1;
+    if (d === 0) continue;
+    if (p === 1 && d === 1) r += 'สิบ';
+    else if (p === 1 && d === 2) r += 'ยี่สิบ';
+    else if (p === 0 && d === 1 && (L > 1 || hasHigher)) r += 'เอ็ด';
+    else r += TH_DIGIT[d] + TH_POS[p];
+  }
+  return r;
+}
+function bahtText(n) {
+  const cents = Math.round(Math.abs(n) * 100);
+  const baht = Math.floor(cents / 100), sat = cents % 100;
+  if (cents === 0) return 'ศูนย์บาทถ้วน';
+  return (baht ? readInt(String(baht)) + 'บาท' : '') + (sat ? readInt(String(sat)) + 'สตางค์' : 'ถ้วน');
+}
+
+// 2026-09-09 -> 09/09/69 (พ.ศ. 2 หลัก)
+function thaiShortDate(iso, sep = '/') {
+  if (!iso) return '';
+  const [y, m, d] = iso.split('-');
+  return [d, m, String((+y + 543) % 100).padStart(2, '0')].join(sep);
+}
+
+const has = (v) => String(v ?? '').trim() !== '';
+// จำนวนเงินของแต่ละแถว: มีหน่วยละ = จำนวน × หน่วยละ, ไม่มี = ใช้จำนวนเงินที่พิมพ์เอง
+const lineAmount = (r) => has(r.price) ? (has(r.qty) ? num(r.qty) : 1) * num(r.price) : has(r.amount) ? num(r.amount) : null;
+const itemsTotal = (items) => items.reduce((s, r) => s + (lineAmount(r) || 0), 0);
+const total = () => itemsTotal(state.items);
+
+// ===== Input binding =====
+function bindFields() {
+  document.querySelectorAll('[data-k]').forEach(el => {
+    el.value = getPath(el.dataset.k) ?? '';
+    el.oninput = () => { setPath(el.dataset.k, el.value); update(); };
+  });
+}
+
+function renderItemsEditor() {
+  document.getElementById('itemsEditor').innerHTML = state.items.map((r, i) => {
+    const auto = has(r.price);
+    return `
+    <div class="item" data-i="${i}">
+      <div class="item-top">
+        <span class="badge">${i + 1}</span>
+        <input list="matNames" placeholder="ชื่อรายการ เช่น เปลี่ยนถ่ายน้ำมันหม้อแปลง ขนาด 100 KVA" value="${esc(r.name)}" oninput="editItem(this,'name')" onchange="autofill(${i})" onkeydown="enterAdd(event)">
+        <button class="icon" title="ลบ" onclick="removeItem(${i})">×</button>
+      </div>
+      <div class="item-grid">
+        <div><label>จำนวน</label><input inputmode="decimal" class="money" value="${esc(r.qty)}" oninput="editItem(this,'qty')" onkeydown="enterAdd(event)"></div>
+        <div><label>หน่วย</label><input list="units" value="${esc(r.unit)}" oninput="editItem(this,'unit')" onkeydown="enterAdd(event)"></div>
+        <div><label>หน่วยละ (บาท)</label><input inputmode="decimal" class="money" placeholder="ไม่ใส่ก็ได้" value="${esc(r.price)}" oninput="editItem(this,'price')" onkeydown="enterAdd(event)"></div>
+        <div><label>จำนวนเงิน</label><input inputmode="decimal" class="money amt${auto ? ' calc' : ''}" ${auto ? 'readonly title="คำนวณอัตโนมัติ (จำนวน × หน่วยละ)"' : 'placeholder="ไม่ใส่ก็ได้"'} value="${auto ? fmt(lineAmount(r)) : esc(r.amount)}" oninput="editItem(this,'amount')" onkeydown="enterAdd(event)"></div>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function editItem(el, k) {
+  const card = el.closest('.item');
+  const r = state.items[+card.dataset.i];
+  r[k] = el.value;
+  if (k === 'qty' || k === 'price') {
+    const amt = card.querySelector('.amt');
+    const auto = has(r.price);
+    amt.readOnly = auto;
+    amt.classList.toggle('calc', auto);
+    amt.placeholder = auto ? '' : 'ไม่ใส่ก็ได้';
+    amt.value = auto ? fmt(lineAmount(r)) : r.amount;
+  }
+  update();
+}
+
+// เลือกชื่อรายการที่เคยใช้ → เติมหน่วย/หน่วยละให้อัตโนมัติ
+let known = {};
+function autofill(i) {
+  const r = state.items[i], k = known[r.name.trim()];
+  if (!k || has(r.price)) return;
+  r.unit = k.unit; r.price = k.price;
+  renderItemsEditor(); update();
+}
+
+function addItem() {
+  state.items.push(newItem());
+  renderItemsEditor(); update();
+  const cards = document.querySelectorAll('#itemsEditor .item');
+  cards[cards.length - 1]?.querySelector('input')?.focus();
+}
+// กด Enter = เพิ่มรายการถัดไปทันที
+function enterAdd(e) {
+  if (e.key !== 'Enter') return;
+  e.preventDefault();
+  addItem();
+}
+function removeItem(i) {
+  state.items.splice(i, 1);
+  if (!state.items.length) state.items.push(newItem());
+  renderItemsEditor(); update();
+}
+
+// ===== Document =====
+function renderDoc() {
+  const { customer: cu, quoter: q } = state;
+  const t = total();
+  const dash = (v) => has(v) ? esc(v) : '-';
+  const rows = state.items.filter(r => has(r.name) || lineAmount(r) !== null).map((r, i) => {
+    const amt = lineAmount(r);
+    return `<tr><td class="c">${i + 1}</td><td>${esc(r.name)}</td><td class="c">${dash(r.qty)}</td><td class="c">${dash(r.unit)}</td>
+      <td class="c">${has(r.price) ? fmt(num(r.price)) : '-'}</td><td class="r">${amt !== null ? fmt(amt) + ' บาท' : '-'}</td></tr>`;
+  }).join('');
+
+  document.getElementById('doc').innerHTML = `
+    <div class="title">ใบเสนอราคา</div>
+    <table class="items">
+      <colgroup><col style="width:5%"><col style="width:42%"><col style="width:9%"><col style="width:10%"><col style="width:15%"><col style="width:19%"></colgroup>
+      <tr>
+        <td colspan="3" class="head">บริษัท : ${esc(cu.company)}<br>เรียน : ${esc(cu.attn)}<br>โทร : ${esc(cu.phone)}</td>
+        <td colspan="3" class="head">วันที่ ${thaiShortDate(state.date)}<br>ผู้เสนอราคา : ${esc(q.name)}<br>โทร : ${esc(q.phone)}</td>
+      </tr>
+      <tr><th>ที่</th><th>รายการ</th><th>จำนวน</th><th>หน่วย</th><th>หน่วยละ(บาท)</th><th>จำนวนเงิน</th></tr>
+      ${rows}
+      <tr><td colspan="5" class="c">รวม</td><td class="r">${fmt(t)} บาท</td></tr>
+    </table>
+
+    <div class="grand">รวมทั้งสิ้น<span class="dots" style="width:180px">${fmt(t)}</span>บาท (${bahtText(t)})</div>
+
+    <div class="sign">
+      <div>ลงชื่อ<span class="dots" style="width:200px">&nbsp;</span>ผู้เสนอราคา</div>
+      <div>(<span class="dots" style="width:240px">${esc(q.name) || '&nbsp;'}</span>)</div>
+    </div>`;
+
+  document.getElementById('totalNum').textContent = fmt(t) + ' บาท';
+  document.getElementById('totalWords').textContent = bahtText(t);
+}
+
+function updateSuggestions() {
+  known = {};
+  // ใบเก่าก่อน ใบใหม่ทับ → ได้ราคาล่าสุด
+  [...loadHistory().map(h => normalize(h.data)).reverse(), state].forEach(d => d.items.forEach(r => {
+    if (has(r.name)) known[r.name.trim()] = { unit: r.unit, price: r.price };
+  }));
+  document.getElementById('matNames').innerHTML = Object.keys(known).map(n => `<option value="${esc(n)}">`).join('');
+}
+
+function update() {
+  renderDoc();
+  localStorage.setItem(KEY, JSON.stringify(state));
+}
+
+// ===== History =====
+const loadHistory = () => JSON.parse(localStorage.getItem(HIST_KEY) || '[]');
+const storeHistory = (h) => localStorage.setItem(HIST_KEY, JSON.stringify(h));
+
+function saveToHistory() {
+  const h = loadHistory();
+  const entry = { id: state._id || Date.now(), savedAt: Date.now(), data: { ...state } };
+  state._id = entry.id; entry.data._id = entry.id;
+  const idx = h.findIndex(x => x.id === entry.id);
+  if (idx >= 0) h[idx] = entry; else h.unshift(entry);
+  storeHistory(h); update(); renderHistory(); updateSuggestions();
+  toast('บันทึกแล้ว ✓');
+}
+
+function renderHistory() {
+  const h = loadHistory();
+  document.getElementById('historyList').innerHTML = h.length ? h.map(x => {
+    const d = x.data;
+    normalize(d);
+    const t = itemsTotal(d.items);
+    const titles = d.items.map(r => r.name).filter(has).slice(0, 2).join(', ') + (d.items.length > 2 ? ' …' : '');
+    return `<div class="history-item">
+      <div><div class="t">${esc(d.customer.company || '(ไม่ระบุลูกค้า)')}</div>
+      <div class="s">${thaiShortDate(d.date)} · ${esc(titles || '-')} · ${fmt(t)} บาท</div></div>
+      <button onclick="openHistory(${x.id}, false)">เปิด</button>
+      <button onclick="openHistory(${x.id}, true)" title="ใช้เป็นแม่แบบสร้างใบใหม่">คัดลอก</button>
+      <button class="icon" title="ลบ" onclick="deleteHistory(${x.id})">×</button>
+    </div>`;
+  }).join('') : '<p class="hint">ยังไม่มี — กด 💾 บันทึกเก็บไว้ เพื่อเก็บใบนี้ไว้เปิดใช้ภายหลัง</p>';
+}
+
+function openHistory(id, asCopy) {
+  const x = loadHistory().find(x => x.id === id);
+  if (!x) return;
+  state = normalize(JSON.parse(JSON.stringify(x.data)));
+  if (asCopy) { delete state._id; state.date = todayISO(); }
+  bindFields(); renderItemsEditor(); update();
+  toast(asCopy ? 'คัดลอกเป็นใบใหม่แล้ว (วันที่ = วันนี้)' : 'เปิดแล้ว');
+}
+
+function deleteHistory(id) {
+  if (!confirm('ลบใบเสนอราคานี้ออกจากรายการที่บันทึกไว้?')) return;
+  storeHistory(loadHistory().filter(x => x.id !== id));
+  renderHistory();
+}
+
+function newQuote() {
+  if (!confirm('เริ่มใบเสนอราคาใหม่? (ใบปัจจุบันที่ยังไม่บันทึกจะหายไป)')) return;
+  state = blankQuote(state);
+  bindFields(); renderItemsEditor(); update();
+}
+
+// ===== PDF =====
+async function downloadPDF() {
+  await document.fonts.ready;
+  const el = document.getElementById('doc');
+  el.style.boxShadow = 'none';
+  const name = `ใบเสนอราคา ${thaiShortDate(state.date, '-')}${state.customer.company ? ' ' + state.customer.company : ''}`;
+  try {
+    await html2pdf().set({
+      margin: 0,
+      filename: name.replace(/[\\/:*?"<>|]/g, '') + '.pdf',
+      image: { type: 'jpeg', quality: 0.98 },
+      html2canvas: { scale: 2, useCORS: true, scrollY: 0 },
+      jsPDF: { unit: 'mm', format: 'a4', orientation: 'portrait' },
+      pagebreak: { mode: ['css', 'legacy'] },
+    }).from(el).save();
+  } finally {
+    el.style.boxShadow = '';
+  }
+}
+
+bindFields();
+renderItemsEditor();
+renderHistory();
+updateSuggestions();
+update();
+</script>
+</body>
+</html>
